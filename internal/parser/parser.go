@@ -13,7 +13,7 @@ const (
 
 // parser parses args of the apply command
 type Parser struct {
-	rotate    int // 0 means do not rotate {1:90, 2:180, 3:270}
+	rotate    int // 0 means do not rotate map[int]degrees{0:0, 1:90, 2:180, 3:270}
 	horMirror bool
 	verMirror bool
 	filter    string
@@ -36,6 +36,8 @@ func (parser *Parser) parse(args *[]string) (int, error) {
 				parser.rotate = (parser.rotate + 3) % 4
 			case "180", "-180":
 				parser.rotate = (parser.rotate + 2) % 4
+			default:
+				return i, nil // need to return an error not nil
 			}
 		} else if strings.HasPrefix(arg, mirror) {
 			arg = strings.TrimPrefix(arg, mirror)
@@ -44,6 +46,8 @@ func (parser *Parser) parse(args *[]string) (int, error) {
 				parser.horMirror = !parser.horMirror
 			case "vertical", "v", "vertically", "ver":
 				parser.verMirror = !parser.verMirror
+			default:
+				return i, nil // need to return an error not nil
 			}
 		} else if strings.HasPrefix(arg, crop) {
 			// in dev
