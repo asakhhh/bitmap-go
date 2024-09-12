@@ -1,7 +1,7 @@
 package main
 
 import (
-	. "bitmap/io"
+	. "bitmap/cmd/bmp"
 )
 
 func main() {
