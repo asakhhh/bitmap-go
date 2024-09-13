@@ -1,15 +1,15 @@
 package logic
 
-func Mirror(pixelData []byte, width, hight int, isHorizontal bool) []byte {
+func Mirror(pixelData []byte, width, height int, isHorizontal bool) []byte {
 	rowSize := ((width*3 + 3) & ^3) // Row size must be a divisible by 4 bytes
 	if isHorizontal {
-		return mirrorHorizontal(pixelData, width, hight, rowSize)
+		return mirrorHorizontal(pixelData, width, height, rowSize)
 	}
-	return mirrorVertical(pixelData, width, hight, rowSize)
+	return mirrorVertical(pixelData, width, height, rowSize)
 }
 
-func mirrorHorizontal(pixelData []byte, width, hight, rowSize int) []byte {
-	for i := 0; i < hight; i++ {
+func mirrorHorizontal(pixelData []byte, width, height, rowSize int) []byte {
+	for i := 0; i < height; i++ {
 		start := rowSize * i
 		end := start + width*3 - 3
 		for start < end {
@@ -23,9 +23,9 @@ func mirrorHorizontal(pixelData []byte, width, hight, rowSize int) []byte {
 	return pixelData
 }
 
-func mirrorVertical(pixelData []byte, width, hight, rowSize int) []byte {
+func mirrorVertical(pixelData []byte, width, height, rowSize int) []byte {
 	firstRow := 0
-	lastRow := rowSize * (hight - 1)
+	lastRow := rowSize * (height - 1)
 	for firstRow < lastRow {
 		for j := 0; j < width*3; j++ {
 			pixelData[firstRow+j], pixelData[lastRow+j] = pixelData[lastRow+j], pixelData[firstRow+j]
