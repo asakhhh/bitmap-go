@@ -1,10 +1,9 @@
 package bmp
 
 import (
+	"bitmap/logic"
 	"fmt"
 	"os"
-
-	"bitmap/logic"
 )
 
 func Run() {
@@ -25,7 +24,7 @@ func Run() {
 		logic.Header(args[0])
 	// in dev
 	case "apply":
-		if len(args) < 4 {
+		if len(args) < 3 {
 			fmt.Printf("Usage: bitmap apply [--rotate-right|--rotate-left] <input_file> <output_file>\nDescription: Applies transformations to the bitmap file\n")
 			os.Exit(1)
 		}

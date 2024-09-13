@@ -9,7 +9,8 @@ import (
 
 func Apply(options []string) {
 	// Open the file
-	fileName := options[len(options)-2]
+	// fileName := options[len(options)-2]
+	fileName := "sample.bmp"
 	file, err := os.Open(fileName)
 	if err != nil {
 		fmt.Printf("Error opening file %q: %q", fileName, err)
@@ -18,9 +19,15 @@ func Apply(options []string) {
 	defer file.Close()
 
 	// Read the BMP Header
-	header := make([]byte, bmpHeaderSize)
+	header := make([]byte, 54)
 	if _, err := file.Read(header); err != nil {
 		fmt.Println("Error reading header:", err)
+		os.Exit(1)
+	}
+
+	// Check file type for .bmp
+	if binary.LittleEndian.Uint16(header[0:2]) != 0x4D42 { // 0x4D42 == "BM"
+		fmt.Printf("Error: %s is not bitmap file\n", fileName)
 		os.Exit(1)
 	}
 
@@ -36,6 +43,26 @@ func Apply(options []string) {
 	file.Seek(int64(offset), 0)
 	if _, err := file.Read(pixelData); err != nil {
 		fmt.Println("Error reading pixel data:", err)
+		os.Exit(1)
+	}
+
+	pixelData = Mirror(pixelData, width, height, false)
+
+	newfile, err := os.Create("newSample.bmp")
+	if err != nil {
+		fmt.Printf("Error creating file %q: %q", "newSample.bmp", err)
+		os.Exit(1)
+	}
+	defer newfile.Close()
+
+	_, err = newfile.Write(header)
+	if err != nil {
+		fmt.Printf("Error writing into file %q: %q", "newSample.bmp", err)
+		os.Exit(1)
+	}
+	_, err = newfile.Write(pixelData)
+	if err != nil {
+		fmt.Printf("Error writing into file %q: %q", "newSample.bmp", err)
 		os.Exit(1)
 	}
 
