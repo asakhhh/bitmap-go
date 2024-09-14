@@ -13,44 +13,41 @@ const (
 	crop          = "--crop="
 )
 
-// parser parses args of the apply command
-type Parser struct {
-	rotate     int // 0 means do not rotate map[int]degrees{0:0, 1:90, 2:180, 3:270}
-	horMirror  bool
-	verMirror  bool
-	cropValues []int
-	filter     []string
-	source     string
-	dest       string
+type Option struct {
+	Name                                    string
+	OffsetX, OffsetY, CropWidth, CropHeight int
+	IsHorizontal                            bool
+	Rotate                                  int
+	Filter                                  string
 }
 
 // parser() parses args. Returns n parsed args and an error
-func (parser *Parser) Parse(args *[]string) (int, error) {
-	for i, arg := range *args {
+func Parse(args *[]string) ([]Option, error) {
+	var opts []Option
+	for _, arg := range (*args)[:len(*args)-2] {
 		if strings.HasPrefix(arg, filter) {
-			arg = strings.TrimPrefix(arg, filter)
-			parser.filter = append(parser.filter, arg)
+			opts = append(opts, Option{Name: "filter", Filter: strings.TrimPrefix(arg, filter)})
 		} else if strings.HasPrefix(arg, rotate) {
 			arg = strings.TrimPrefix(arg, rotate)
 			switch arg {
 			case "right", "90", "-270":
-				parser.rotate = (parser.rotate + 1) % 4
+				opts = append(opts, Option{Name: "rotate", Rotate: 1})
 			case "left", "-90", "270":
-				parser.rotate = (parser.rotate + 3) % 4
+				opts = append(opts, Option{Name: "rotate", Rotate: 3})
 			case "180", "-180":
-				parser.rotate = (parser.rotate + 2) % 4
+				opts = append(opts, Option{Name: "rotate", Rotate: 2})
 			default:
-				return i, nil // need to return an error not nil
+				return nil, nil // need to return an error not nil
 			}
 		} else if strings.HasPrefix(arg, mirror) {
 			arg = strings.TrimPrefix(arg, mirror)
 			switch arg {
 			case "horizontal", "h", "horizontally", "hor":
-				parser.horMirror = !parser.horMirror
+				opts = append(opts, Option{Name: "mirror", IsHorizontal: true})
 			case "vertical", "v", "vertically", "ver":
-				parser.verMirror = !parser.verMirror
+				opts = append(opts, Option{Name: "mirror", IsHorizontal: false})
 			default:
-				return i, nil // need to return an error not nil
+				return nil, nil // need to return an error not nil
 			}
 		} else if strings.HasPrefix(arg, crop) {
 			arg = strings.TrimPrefix(arg, crop)
@@ -61,45 +58,24 @@ func (parser *Parser) Parse(args *[]string) (int, error) {
 			if len(values) != 2 && len(values) != 4 {
 				// return an error if crop settings are not set properly.
 				// it accepts either two or four values
-				return i, nil // need to return an error not nil
+				return nil, nil // need to return an error not nil
 			}
-
 			for _, str := range values {
 				num, err := strconv.Atoi(str)
-				if err != nil {
-					return i, nil // need to return an error not nil
+				if err != nil || num < 0 {
+					return nil, nil // need to return an error not nil
 				}
 
 				numValues = append(numValues, num)
 			}
-
-			if parser.cropValues == nil {
-				parser.cropValues = numValues
-			} else {
-				if len(numValues) == 2 {
-					parser.cropValues[0] += numValues[0]
-					parser.cropValues[1] += numValues[1]
-				} else {
-					if len(parser.cropValues) == 2 {
-						parser.cropValues = append(parser.cropValues, numValues[2:4]...)
-					} else {
-						parser.cropValues[0] += numValues[0]
-						parser.cropValues[1] += numValues[1]
-						parser.cropValues[2] = numValues[2]
-						parser.cropValues[3] = numValues[3]
-					}
-				}
+			if len(numValues) < 4 {
+				numValues = append(numValues, -1, -1)
 			}
+			opts = append(opts, Option{Name: "crop", OffsetX: numValues[0], OffsetY: numValues[1], CropWidth: numValues[2], CropHeight: numValues[3]})
 		} else {
-			if i == len(*args)-2 {
-				parser.source = arg
-			} else if i == len(*args)-1 {
-				parser.dest = arg
-			} else {
-				return i, nil // need to return an error not nil
-			}
+			return nil, nil // need to return an error not nil
 		}
 	}
 
-	return len(*args), nil
+	return opts, nil
 }

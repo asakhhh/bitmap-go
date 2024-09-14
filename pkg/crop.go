@@ -1,4 +1,4 @@
-package logic
+package pkg
 
 import "fmt"
 
@@ -7,13 +7,17 @@ func Crop(pixelData []byte, width, height int, offsetX, offsetY, cropWidth, crop
 	rowSize := ((width*3 + 3) & ^3)
 
 	// Set default width and height if not provided
-	if cropWidth == nil {
+	if *cropWidth == -1 {
 		temp := width - *offsetX
 		cropWidth = &temp
 	}
-	if cropHeight == nil {
+	if *cropHeight == -1 {
 		temp := height - *offsetY
 		cropHeight = &temp
+	}
+
+	if *cropHeight <= 0 || *cropWidth <= 0 {
+		return nil, 0, 0, fmt.Errorf("crop width or height are invalid")
 	}
 
 	// Check if crop dimensions are valid

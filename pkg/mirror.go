@@ -1,4 +1,4 @@
-package logic
+package pkg
 
 func Mirror(pixelData []byte, width, height int, isHorizontal bool) []byte {
 	rowSize := ((width*3 + 3) & ^3) // Row size must be a divisible by 4 bytes

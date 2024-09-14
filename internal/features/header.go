@@ -1,4 +1,4 @@
-package logic
+package features
 
 import (
 	"encoding/binary"
@@ -21,8 +21,12 @@ func Header(fileName string) {
 
 	// Read the BMP Header
 	header := make([]byte, bmpHeaderSize)
-	if _, err := file.Read(header); err != nil {
-		fmt.Println("Error reading header:", err)
+	if n, err := file.Read(header); err != nil || n < 54 {
+		if err != nil {
+			fmt.Println("Error reading header:", err)
+		} else {
+			fmt.Println("Error reading header: incorrect number of bytes")
+		}
 		os.Exit(1)
 	}
 

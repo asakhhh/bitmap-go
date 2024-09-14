@@ -1,4 +1,4 @@
-package logic
+package pkg
 
 func Rotate(pixelData []byte, width, height, rotate int) ([]byte, int, int) {
 	if rotate != 1 && rotate != 2 && rotate != 3 {

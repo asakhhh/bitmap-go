@@ -1,6 +1,8 @@
-package logic
+package features
 
 import (
+	"bitmap/internal/parser"
+	"bitmap/pkg"
 	"encoding/binary"
 	"fmt"
 	"os"
@@ -10,13 +12,12 @@ import (
 func Apply(options []string) {
 	// Open the file
 	// fileName := options[len(options)-2]
-	fileName := "sample.bmp"
+	fileName := options[len(options)-2]
 	file, err := os.Open(fileName)
 	if err != nil {
 		fmt.Printf("Error opening file %q: %q", fileName, err)
 		os.Exit(1)
 	}
-	defer file.Close()
 
 	// Read the BMP Header
 	header := make([]byte, 54)
@@ -46,23 +47,51 @@ func Apply(options []string) {
 		os.Exit(1)
 	}
 
-	pixelData = Mirror(pixelData, width, height, false)
+	pixelData = pkg.Mirror(pixelData, width, height, false)
 
-	newfile, err := os.Create("newSample.bmp")
+	opts, err := parser.Parse(&options)
 	if err != nil {
-		fmt.Printf("Error creating file %q: %q", "newSample.bmp", err)
+		fmt.Println(err)
+		os.Exit(1)
+	}
+
+	for _, opt := range opts {
+		switch opt.Name {
+		case "filter":
+			pixelData = pkg.Filter(pixelData, width, height, opt.Filter)
+		case "mirror":
+			pixelData = pkg.Mirror(pixelData, width, height, opt.IsHorizontal)
+		case "rotate":
+			pixelData, width, height = pkg.Rotate(pixelData, width, height, opt.Rotate)
+		case "crop":
+			pixelData, width, height, err = pkg.Crop(pixelData, width, height, &opt.OffsetX, &opt.OffsetY, &opt.CropWidth, &opt.CropHeight)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+		}
+	}
+	pixelData = pkg.Mirror(pixelData, width, height, false)
+
+	binary.LittleEndian.PutUint32(header[18:22], uint32(width))
+	binary.LittleEndian.PutUint32(header[22:26], uint32(height))
+
+	file.Close()
+	newfile, err := os.Create(options[len(options)-1])
+	if err != nil {
+		fmt.Printf("Error creating file %q: %q", options[len(options)-1], err)
 		os.Exit(1)
 	}
 	defer newfile.Close()
 
 	_, err = newfile.Write(header)
 	if err != nil {
-		fmt.Printf("Error writing into file %q: %q", "newSample.bmp", err)
+		fmt.Printf("Error writing into file %q: %q", options[len(options)-1], err)
 		os.Exit(1)
 	}
 	_, err = newfile.Write(pixelData)
 	if err != nil {
-		fmt.Printf("Error writing into file %q: %q", "newSample.bmp", err)
+		fmt.Printf("Error writing into file %q: %q", options[len(options)-1], err)
 		os.Exit(1)
 	}
 
