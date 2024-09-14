@@ -1,7 +1,5 @@
 package pkg
 
-import "fmt"
-
 func Filter(pixelData []byte, width, height int, filter string) []byte {
 	rowSize := ((width*3 + 3) & ^3)
 	switch filter {
@@ -34,37 +32,33 @@ func Filter(pixelData []byte, width, height int, filter string) []byte {
 			}
 		}
 	case "pixelate":
-		block := 2
+		block := 7
 		blocks := make([][][3]int, height/block+2)
+		cnt := make([][]int, height/block+2)
 		for i := range blocks {
 			blocks[i] = make([][3]int, width/block+2)
+			cnt[i] = make([]int, width/block+2)
 		}
-		// fmt.Println(pixelData)
 		for y := 0; y < height; y++ {
 			for x := 0; x < width; x++ {
 				pixel := y*rowSize + x*3
 				blocks[y/block][x/block][0] += int(pixelData[pixel])
 				blocks[y/block][x/block][1] += int(pixelData[pixel+1])
 				blocks[y/block][x/block][2] += int(pixelData[pixel+2])
+				cnt[y/block][x/block]++
 			}
 		}
 
-		// fmt.Println(blocks)
 		for y := 0; y < (height+block-1)/block; y++ {
 			for x := 0; x < (width+block-1)/block; x++ {
-				blockHeight := block // int(math.Min(float64(block), float64(height-y+1)))
-				blockWidth := block  // int(math.Min(float64(block), float64(width-x+1)))
-				blocksize := blockHeight * blockWidth
-				blocks[y/block][x/block][0] /= blocksize
-				blocks[y/block][x/block][1] /= blocksize
-				blocks[y/block][x/block][2] /= blocksize
-				// blocks[y/block][x/block][0] /= cnt[y/block][x/block]
-				// blocks[y/block][x/block][1] /= cnt[y/block][x/block]
-				// blocks[y/block][x/block][2] /= cnt[y/block][x/block]
-				fmt.Println(blocks[y/block][x/block])
+				// blockHeight := int(math.Min(float64(block), float64(height-y+1)))
+				// blockWidth := int(math.Min(float64(block), float64(width-x+1)))
+				// blocksize := blockHeight * blockWidth
+				blocks[y][x][0] /= cnt[y][x]
+				blocks[y][x][1] /= cnt[y][x]
+				blocks[y][x][2] /= cnt[y][x]
 			}
 		}
-		// fmt.Println(blocks)
 		for y := 0; y < height; y++ {
 			for x := 0; x < width; x++ {
 				pixel := y*rowSize + x*3
