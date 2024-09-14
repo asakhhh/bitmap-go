@@ -36,6 +36,8 @@ func Apply(options []string) {
 	height := int(binary.LittleEndian.Uint32(header[22:26]))
 	offset := int(binary.LittleEndian.Uint32(header[10:14]))
 
+	fmt.Println(offset)
+
 	// Calculate row size and read pixel data
 	rowSize := ((width*3 + 3) & ^3) // Row size must be a divisible by 4 bytes
 	pixelData := make([]byte, rowSize*height)
@@ -67,6 +69,13 @@ func Apply(options []string) {
 			pixelData, width, height, err = pkg.Crop(pixelData, width, height, &opt.OffsetX, &opt.OffsetY, &opt.CropWidth, &opt.CropHeight)
 			if err != nil {
 				fmt.Println(err)
+				os.Exit(1)
+			}
+		default:
+			if strings.HasPrefix(opt.Name, "blur") || strings.HasPrefix(opt.Name, "pixelate") {
+				pixelData = pkg.Filter(pixelData, width, height, opt.Filter)
+			} else {
+				fmt.Println("No such filter option")
 				os.Exit(1)
 			}
 		}
