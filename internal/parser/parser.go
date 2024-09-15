@@ -7,10 +7,10 @@ import (
 )
 
 const (
-	filter string = "--filter="
-	mirror        = "--mirror="
-	rotate        = "--rotate="
-	crop          = "--crop="
+	filter = "--filter="
+	mirror = "--mirror="
+	rotate = "--rotate="
+	crop   = "--crop="
 )
 
 type Option struct {
@@ -21,7 +21,7 @@ type Option struct {
 	Filter                                  string
 }
 
-// parser() parses args. Returns n parsed args and an error
+// parser() parses args. Returns n parsed args and a possible error
 func Parse(args *[]string) ([]Option, error) {
 	var opts []Option
 	for _, arg := range (*args)[:len(*args)-2] {
@@ -37,7 +37,7 @@ func Parse(args *[]string) ([]Option, error) {
 			case "180", "-180":
 				opts = append(opts, Option{Name: "rotate", Rotate: 2})
 			default:
-				return nil, nil // need to return an error not nil
+				return nil, fmt.Errorf("incorrect value for rotate provided - " + arg)
 			}
 		} else if strings.HasPrefix(arg, mirror) {
 			arg = strings.TrimPrefix(arg, mirror)
@@ -47,23 +47,22 @@ func Parse(args *[]string) ([]Option, error) {
 			case "vertical", "v", "vertically", "ver":
 				opts = append(opts, Option{Name: "mirror", IsHorizontal: false})
 			default:
-				return nil, nil // need to return an error not nil
+				return nil, fmt.Errorf("incorrect value for mirror provided - " + arg)
 			}
 		} else if strings.HasPrefix(arg, crop) {
 			arg = strings.TrimPrefix(arg, crop)
 			values := strings.Split(arg, "-")
 			numValues := make([]int, 0)
-			fmt.Println(values)
 
 			if len(values) != 2 && len(values) != 4 {
 				// return an error if crop settings are not set properly.
 				// it accepts either two or four values
-				return nil, nil // need to return an error not nil
+				return nil, fmt.Errorf("incorrect settings for crop provided (2 or 4 is required) - %v", values)
 			}
 			for _, str := range values {
 				num, err := strconv.Atoi(str)
 				if err != nil || num < 0 {
-					return nil, nil // need to return an error not nil
+					return nil, fmt.Errorf("incorrect setting for crop is provided (non-negative numbers are required) - %v", str)
 				}
 
 				numValues = append(numValues, num)
@@ -73,7 +72,7 @@ func Parse(args *[]string) ([]Option, error) {
 			}
 			opts = append(opts, Option{Name: "crop", OffsetX: numValues[0], OffsetY: numValues[1], CropWidth: numValues[2], CropHeight: numValues[3]})
 		} else {
-			return nil, nil // need to return an error not nil
+			return nil, fmt.Errorf("incorrect argument provided for apply - %v", arg)
 		}
 	}
 

@@ -14,8 +14,7 @@ func Header(fileName string) {
 	// Open the file
 	file, err := os.Open(fileName)
 	if err != nil {
-		fmt.Println("Error opening file:", err)
-		os.Exit(1)
+		PrintErrorAndExit(fmt.Sprintf("could not open file %q: ", fileName) + err.Error())
 	}
 	defer file.Close()
 
@@ -23,18 +22,16 @@ func Header(fileName string) {
 	header := make([]byte, bmpHeaderSize)
 	if n, err := file.Read(header); err != nil || n < 54 {
 		if err != nil {
-			fmt.Println("Error reading header:", err)
+			PrintErrorAndExit("could not read header")
 		} else {
-			fmt.Println("Error reading header: incorrect number of bytes")
+			PrintErrorAndExit("could not read header: incorrect number of bytes")
 		}
-		os.Exit(1)
 	}
 
 	// Get Header Data
 	fileType := binary.LittleEndian.Uint16(header[0:2])
 	if fileType != 0x4D42 { // 0x4D42 == "BM"
-		fmt.Printf("Error: %s is not bitmap file\n", fileName)
-		os.Exit(1)
+		PrintErrorAndExit(fmt.Sprintf("%q is not a bitmap file", fileName))
 	}
 	fileSize := int(binary.LittleEndian.Uint32(header[2:6]))
 	width := int(binary.LittleEndian.Uint32(header[18:22]))

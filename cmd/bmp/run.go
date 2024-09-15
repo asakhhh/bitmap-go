@@ -1,15 +1,32 @@
 package bmp
 
 import (
-	"bitmap/internal/features"
-	"fmt"
 	"os"
+	"strings"
+
+	"bitmap/internal/features"
 )
 
 func Run() {
-	if len(os.Args) <= 2 { //  ot help case
-		fmt.Println("Help flag")
-		return
+	if len(os.Args) == 1 {
+		features.PrintHelp("general")
+	} else {
+		if strings.HasPrefix(os.Args[1], "--help") || os.Args[1] == "-h" {
+			features.PrintHelp("general")
+		} else {
+			for _, arg := range os.Args[2:] {
+				if strings.HasPrefix(arg, "--help") || arg == "-h" {
+					if os.Args[1] == "apply" || os.Args[1] == "header" {
+						features.PrintHelp(os.Args[1])
+					} else {
+						features.PrintHelp("general")
+					}
+				}
+			}
+			if os.Args[1] != "apply" && os.Args[1] != "header" {
+				features.PrintErrorAndExit("Incorrect option chosen - " + os.Args[1])
+			}
+		}
 	}
 	command := os.Args[1]
 	args := os.Args[2:]
@@ -18,21 +35,13 @@ func Run() {
 	case "header":
 		if len(args) == 0 {
 			// no source file provided
-			fmt.Printf("Usage: bitmap header <source_file>\nDescription: Prints bitmap file header information\n")
-			os.Exit(1)
+			features.PrintErrorAndExit("file not provided")
 		}
 		features.Header(args[0])
-	// in dev
 	case "apply":
 		if len(args) < 3 {
-			fmt.Printf("Usage: bitmap apply [--rotate-right|--rotate-left] <input_file> <output_file>\nDescription: Applies transformations to the bitmap file\n")
-			os.Exit(1)
+			features.PrintErrorAndExit("not enough arguments to use this option. Two files and at least one argument are required.")
 		}
 		features.Apply(args)
-	// in dev
-	default:
-		fmt.Println("Error: Unknown command")
-		fmt.Println("Usage: bitmap <command> [options]")
-		os.Exit(1)
 	}
 }

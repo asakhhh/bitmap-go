@@ -3,12 +3,11 @@ package pkg
 import (
 	"fmt"
 	"math"
-	"os"
 	"strconv"
 	"strings"
 )
 
-func Filter(pixelData []byte, width, height int, filter string) []byte {
+func Filter(pixelData []byte, width, height int, filter string) ([]byte, error) {
 	rowSize := ((width*3 + 3) & ^3)
 	switch filter {
 	case "red", "green", "blue":
@@ -40,29 +39,28 @@ func Filter(pixelData []byte, width, height int, filter string) []byte {
 			}
 		}
 	case "pixelate":
-		return pixelate(pixelData, width, height, 7)
+		return pixelate(pixelData, width, height, 20), nil
 	case "blur":
-		return blur(pixelData, width, height, 5)
+		return blur(pixelData, width, height, 5), nil
 	default:
 		if strings.HasPrefix(filter, "blur") {
 			rad, err := strconv.Atoi(strings.TrimPrefix(filter, "blur"))
 			if err != nil || rad < 0 {
-				fmt.Println("Invalid blur radius chosen")
-				os.Exit(1)
+				return nil, fmt.Errorf("invalid blur radius chosen")
 			}
-			return blur(pixelData, width, height, rad)
+			return blur(pixelData, width, height, rad), nil
 		}
 		if strings.HasPrefix(filter, "pixelate") {
 			block, err := strconv.Atoi(strings.TrimPrefix(filter, "pixelate"))
 			if err != nil || block <= 0 {
-				fmt.Println("Invalid block size chosen")
-				os.Exit(1)
+				return nil, fmt.Errorf("invalid block size chosen")
 			}
-			return pixelate(pixelData, width, height, block)
+			return pixelate(pixelData, width, height, block), nil
 		}
+		return nil, fmt.Errorf("no such filter option")
 	}
 
-	return pixelData
+	return pixelData, nil
 }
 
 func prefixSum(pref *[][][3]int64, y0, x0, y1, x1 int) (int64, int64, int64) {
