@@ -1,11 +1,10 @@
 package bmp
 
 import (
+	"bitmap/internal/features"
 	"fmt"
 	"os"
 	"strings"
-
-	"bitmap/internal/features"
 )
 
 func Run() {

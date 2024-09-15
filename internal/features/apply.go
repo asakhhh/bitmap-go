@@ -1,13 +1,12 @@
 package features
 
 import (
+	"bitmap/internal/parser"
+	"bitmap/pkg"
 	"encoding/binary"
 	"fmt"
 	"os"
 	"strings"
-
-	"bitmap/internal/parser"
-	"bitmap/pkg"
 )
 
 func Apply(options []string) {
@@ -89,8 +88,11 @@ func Apply(options []string) {
 	}
 	pixelData = pkg.Mirror(pixelData, width, height, false) // reversing row order back to store correctly afterwards
 
+	newByteSize := height * ((width*3 + 3) & ^3)
 	binary.LittleEndian.PutUint32(header[18:22], uint32(width))
 	binary.LittleEndian.PutUint32(header[22:26], uint32(height))
+	binary.LittleEndian.PutUint32(header[2:6], uint32(offset+newByteSize))
+	binary.LittleEndian.PutUint32(header[34:38], uint32(newByteSize))
 
 	file.Close()
 	newfile, err := os.Create(options[len(options)-1])
