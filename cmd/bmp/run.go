@@ -1,6 +1,7 @@
 package bmp
 
 import (
+	"fmt"
 	"os"
 	"strings"
 
@@ -36,6 +37,13 @@ func Run() {
 		if len(args) == 0 {
 			// no source file provided
 			features.PrintErrorAndExit("file not provided")
+		}
+		if len(args) > 3 {
+			features.PrintWarning("the following args are ignored: " + args[3])
+			for _, arg := range args[4:] {
+				fmt.Print(", " + arg)
+			}
+			fmt.Println()
 		}
 		features.Header(args[0])
 	case "apply":
