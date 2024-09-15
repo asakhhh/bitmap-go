@@ -19,11 +19,11 @@ func Rotate(pixelData []byte, width, height, rotate int) ([]byte, int, int) {
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			srcIndex = y*rowSize + x*3
-			if rotate == 1 {
+			if rotate == 3 {
 				destIndex = ((newHeight - 1 - x) * newRowSize) + y*3
 			} else if rotate == 2 {
 				destIndex = ((newHeight - 1 - y) * newRowSize) + ((newWidth - 1 - x) * 3)
-			} else if rotate == 3 {
+			} else if rotate == 1 {
 				destIndex = (x * newRowSize) + ((newWidth - 1 - y) * 3)
 			}
 			newPixelData[destIndex] = pixelData[srcIndex]

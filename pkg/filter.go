@@ -40,9 +40,9 @@ func Filter(pixelData []byte, width, height int, filter string) []byte {
 			}
 		}
 	case "pixelate":
-		return pixelate(pixelData, width, height, filter, 5)
+		return pixelate(pixelData, width, height, 7)
 	case "blur":
-		return blur(pixelData, width, height, filter, 5)
+		return blur(pixelData, width, height, 5)
 	default:
 		if strings.HasPrefix(filter, "blur") {
 			rad, err := strconv.Atoi(strings.TrimPrefix(filter, "blur"))
@@ -50,7 +50,7 @@ func Filter(pixelData []byte, width, height int, filter string) []byte {
 				fmt.Println("Invalid blur radius chosen")
 				os.Exit(1)
 			}
-			return blur(pixelData, width, height, filter, rad)
+			return blur(pixelData, width, height, rad)
 		}
 		if strings.HasPrefix(filter, "pixelate") {
 			block, err := strconv.Atoi(strings.TrimPrefix(filter, "pixelate"))
@@ -58,38 +58,54 @@ func Filter(pixelData []byte, width, height int, filter string) []byte {
 				fmt.Println("Invalid block size chosen")
 				os.Exit(1)
 			}
-			return pixelate(pixelData, width, height, filter, block)
+			return pixelate(pixelData, width, height, block)
 		}
 	}
 
 	return pixelData
 }
 
-func blur(pixelData []byte, width, height int, filter string, radius int) []byte {
+func prefixSum(pref *[][][3]int64, y0, x0, y1, x1 int) (int64, int64, int64) {
+	return (*pref)[y1+1][x1+1][0] - (*pref)[y1+1][x0][0] - (*pref)[y0][x1+1][0] + (*pref)[y0][x0][0],
+		(*pref)[y1+1][x1+1][1] - (*pref)[y1+1][x0][1] - (*pref)[y0][x1+1][1] + (*pref)[y0][x0][1],
+		(*pref)[y1+1][x1+1][2] - (*pref)[y1+1][x0][2] - (*pref)[y0][x1+1][2] + (*pref)[y0][x0][2]
+}
+
+func blur(pixelData []byte, width, height int, radius int) []byte {
 	if radius == 0 {
 		return pixelData
 	}
 	newPixelData := make([]byte, len(pixelData))
 	rowSize := ((width*3 + 3) & ^3)
+
+	prefPixel := make([][][3]int64, height+1)
+	prefPixel[0] = make([][3]int64, width+1)
+	for i := 1; i <= height; i++ {
+		prefPixel[i] = make([][3]int64, width+1)
+		for col := 0; col < 3; col++ {
+			prefPixel[i][0][col] = 0
+			for j := 1; j <= width; j++ {
+				prefPixel[i][j][col] = prefPixel[i][j-1][col] + int64(pixelData[(i-1)*rowSize+(j-1)*3+col])
+			}
+		}
+	}
+	for i := 1; i <= height; i++ {
+		for col := 0; col < 3; col++ {
+			for j := 0; j <= width; j++ {
+				prefPixel[i][j][col] += prefPixel[i-1][j][col]
+			}
+		}
+	}
+
 	for y := 0; y < height; y++ {
 		for x := 0; x < width; x++ {
 			pixel := y*rowSize + x*3
-			redSum := 0
-			greenSum := 0
-			blueSum := 0
-			cnt := 0
-			for ny := y - radius; ny <= y+radius; ny++ {
-				for nx := x - radius; nx <= x+radius; nx++ {
-					if ny < 0 || ny >= height || nx < 0 || nx >= width || (x == nx && y == ny) {
-						continue
-					}
-					nPixel := ny*rowSize + nx*3
-					cnt++
-					blueSum += int(pixelData[nPixel])
-					greenSum += int(pixelData[nPixel+1])
-					redSum += int(pixelData[nPixel+2])
-				}
-			}
+			right := min(width-1, x+radius)
+			left := max(0, x-radius)
+			top := max(0, y-radius)
+			bot := min(height-1, y+radius)
+			blueSum, greenSum, redSum := prefixSum(&prefPixel, top, left, bot, right)
+			cnt := int64(right-left+1) * int64(bot-top+1)
 			newPixelData[pixel] = byte(blueSum / cnt)
 			newPixelData[pixel+1] = byte(greenSum / cnt)
 			newPixelData[pixel+2] = byte(redSum / cnt)
@@ -98,7 +114,7 @@ func blur(pixelData []byte, width, height int, filter string, radius int) []byte
 	return newPixelData
 }
 
-func pixelate(pixelData []byte, width, height int, filter string, block int) []byte {
+func pixelate(pixelData []byte, width, height int, block int) []byte {
 	blocks := make([][][3]int, height/block+2)
 	rowSize := ((width*3 + 3) & ^3)
 	for i := range blocks {

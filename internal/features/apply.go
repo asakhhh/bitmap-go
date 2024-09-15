@@ -1,12 +1,13 @@
 package features
 
 import (
-	"bitmap/internal/parser"
-	"bitmap/pkg"
 	"encoding/binary"
 	"fmt"
 	"os"
 	"strings"
+
+	"bitmap/internal/parser"
+	"bitmap/pkg"
 )
 
 func Apply(options []string) {
@@ -35,8 +36,6 @@ func Apply(options []string) {
 	width := int(binary.LittleEndian.Uint32(header[18:22]))
 	height := int(binary.LittleEndian.Uint32(header[22:26]))
 	offset := int(binary.LittleEndian.Uint32(header[10:14]))
-
-	fmt.Println(offset)
 
 	// Calculate row size and read pixel data
 	rowSize := ((width*3 + 3) & ^3) // Row size must be a divisible by 4 bytes
