@@ -97,6 +97,14 @@ func Apply(options []string) {
 		fmt.Printf("Error writing into file %q: %q", options[len(options)-1], err)
 		os.Exit(1)
 	}
+
+	empty := make([]byte, offset-54)
+	_, err = newfile.Write(empty)
+	if err != nil {
+		fmt.Printf("Error writing into file %q: %q", options[len(options)-1], err)
+		os.Exit(1)
+	}
+
 	_, err = newfile.Write(pixelData)
 	if err != nil {
 		fmt.Printf("Error writing into file %q: %q", options[len(options)-1], err)
