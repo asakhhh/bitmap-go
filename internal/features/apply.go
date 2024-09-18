@@ -1,12 +1,13 @@
 package features
 
 import (
-	"bitmap/internal/parser"
-	"bitmap/pkg"
 	"encoding/binary"
 	"fmt"
 	"os"
 	"strings"
+
+	"bitmap/internal/parser"
+	"bitmap/pkg"
 )
 
 func Apply(options []string) {
